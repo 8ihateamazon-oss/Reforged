@@ -135,7 +135,8 @@ Spec.controls.character_prot_void_spam.note="Alternates randomized far and deepe
 Spec.controls.character_prot_void_in.note="Duration in the deeper region."
 Spec.controls.character_prot_void_out.note="Duration in the outer region; never returns to the map."
 toggle("anti_report")
-Spec.controls.anti_report.note="Instant kick on your new Reporters entry or ReportedCount increase, after 1s baseline. No fight gate; unchanged repeats cannot be detected."
+Spec.controls.anti_report.disabled=true
+Spec.controls.anti_report.note="Disabled while the report investigation is on hold."
 number("camera_fov_changer_amount",90,1,120,1)number("camera_blur",0,0,56,1)
 number("crosshair_length",18,1,100,0)number("crosshair_thickness",1,1,10,0)number("crosshair_offset",0,0,100,0)number("crosshair_rotation",360,0,360,0)
 number("local_highlight_alpha_fill",1,0,1,2)number("local_highlight_alpha_outline",0,0,1,2)
@@ -227,6 +228,7 @@ for _,id in ipairs({"evidence:Misc:shop:buy item","evidence:Misc:shop:buy held a
 add("evidence:Misc:player:goto","Button",false)
 Spec.controls["evidence:Misc:player:goto"].note="Move beside the selected player; moves your clone while one is active."
 function Spec.value(values,id)
+    if Spec.controls[id]and Spec.controls[id].disabled then return Spec.controls[id].default end
     local v=values[id]if v~=nil then return v end
     return assert(Spec.controls[id],"Unsupported feature: "..id).default
 end
@@ -254,7 +256,8 @@ function State.cleanFeatures(raw,validKey)
     if State.Features.unlock_all_skins and raw.unlock_all_skins==nil and type(raw.skin_changer_enabled)=="boolean"then out.unlock_all_skins=raw.skin_changer_enabled end
     for id,definition in pairs(State.Features)do
         local value=raw[id]
-        if definition.kind=="Toggle"and type(value)=="boolean"then out[id]=value
+        if definition.disabled then out[id]=definition.default
+        elseif definition.kind=="Toggle"and type(value)=="boolean"then out[id]=value
         elseif definition.kind=="Slider"then out[id]=State.number(value,definition.min,definition.max,definition.decimals)
         elseif definition.kind=="Dropdown"and type(value)=="string"and (table.find(definition.options,value)or definition.dynamic and #value<=100)then out[id]=value
         elseif definition.kind=="KeyPicker"and type(value)=="string"and (value=="None"or validKey(value))then out[id]=value
@@ -13966,6 +13969,8 @@ local function disabled(parent,control)
     local row=frame(parent,{Name=control.id,Size=UDim2.new(1,0,0,19),BackgroundTransparency=1,BorderSizePixel=0,Active=true})
     local kind=control.type
     local definition=FeatureSpec.controls[control.id]
+    local unavailable=definition and definition.disabled and definition
+    if unavailable then definition=nil end
     if kind=="Toggle" then
         local square=frame(row,{Position=UDim2.fromOffset(0,3),Size=UDim2.fromOffset(12,12)})
         paint(square,"BackgroundColor3","edge") paint(square,"BorderColor3","controlBorder")
@@ -14051,7 +14056,8 @@ local function disabled(parent,control)
             if child:IsA("TextLabel") then child.Size=UDim2.new(1,-17-reserve-#(control.swatches or {})*19,1,0) child.TextTruncate=Enum.TextTruncate.AtEnd end
         end
     end
-    if definition and definition.note then hint(row,definition.note)
+    if unavailable then hint(row,unavailable.note)
+    elseif definition and definition.note then hint(row,definition.note)
     elseif not definition and kind~="ColorPicker"then hint(row,"Not implemented")end
     App.controlsById=App.controlsById or {} App.controlsById[control.id]=row
     return row
