@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "artifact": "main.lua",
+  "sha256": "fcbacb1b1384a8ff4edab5db381c6c31f6ae4dd782164432c22c392e3c0a8275",
+  "bytes": 878476,
+  "loader": {
+    "sha256": "ae91f0c073259afcbb6e50b11a6a437cb5a44e22c6a4e45315c729f54bd12d83",
+    "bytes": 696
+  }
+}
